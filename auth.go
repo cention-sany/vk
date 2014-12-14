@@ -9,6 +9,7 @@ import (
 	"strconv"
 	"strings"
 	"time"
+	"fmt"
 )
 
 // AccessToken response from VK
@@ -39,7 +40,7 @@ func (api *API) AuthURL(state string) string {
 }
 
 // Authenticate with API
-func (api *API) Authenticate(code string) error {
+func (api *API) Authenticate(code string) (*Session, error) {
 	var resp *http.Response
 	var err error
 	var tok AccessToken
@@ -54,23 +55,28 @@ func (api *API) Authenticate(code string) error {
 	api.accessTokenURL.RawQuery = query.Encode()
 
 	if resp, err = http.Get(api.accessTokenURL.String()); err != nil {
-		return err
+		return nil, err
 	}
 	defer resp.Body.Close()
 
 	if err = json.NewDecoder(resp.Body).Decode(&tok); err != nil {
-		return err
+		return nil, err
 	}
 
 	if tok.Error != "" {
-		return errors.New(tok.ErrorDescription)
+		return nil, errors.New(tok.ErrorDescription)
 	}
 
+	sess := &Session{
+		AccessToken: tok.AccessToken,
+		UserID: fmt.Sprint(tok.UserID),
+		UserEmail: tok.UserEmail,
+	}
 	tok.ExpiresIn *= time.Second
 	api.UserID = strconv.Itoa(tok.UserID)
 	api.UserEmail = tok.UserEmail
 	api.AccessToken = tok.AccessToken
 	api.Expiry = time.Now().Add(tok.ExpiresIn)
 
-	return nil
+	return sess, nil
 }

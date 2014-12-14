@@ -112,7 +112,7 @@ type (
 //     name_case - choose one of nom, gen, dat, acc, ins, abl.
 //     nom is default
 //
-func (api *API) UsersGet(userIds []string, fields []string, nameCase string) ([]UserInfo, error) {
+func (s *Session) UsersGet(userIds []string, fields []string, nameCase string) ([]UserInfo, error) {
 	if len(userIds) == 0 {
 		return nil, errors.New("you must pass at least one id or screen_name")
 	}
@@ -120,7 +120,7 @@ func (api *API) UsersGet(userIds []string, fields []string, nameCase string) ([]
 		return nil, errors.New("the only available name cases are: " + strings.Join(NameCases, ", "))
 	}
 
-	endpoint := api.getAPIURL("users.get")
+	endpoint := s.getAPIURL("users.get")
 	query := endpoint.Query()
 	query.Set("user_ids", strings.Join(userIds, ","))
 	query.Set("fields", strings.Join(fields, ","))
@@ -140,4 +140,18 @@ func (api *API) UsersGet(userIds []string, fields []string, nameCase string) ([]
 		return nil, err
 	}
 	return response.Response, nil
+}
+
+// User returns current user info with call to UsersGet
+func (s *Session) User(fields []string, nameCase string) (UserInfo, error) {
+	var u UserInfo
+	list, err := s.UsersGet([]string{s.UserID}, fields, nameCase)
+	if err != nil {
+		return u, err
+	}
+	if len(list) == 0 {
+		return u, errors.New("empty response")
+	}
+	u = list[0]
+	return u, nil
 }

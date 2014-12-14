@@ -56,12 +56,25 @@ func NewAPI(appID, secret string, scope []string, callback string) *API {
 	}
 }
 
+func (api *API) NewSession(tok string) *Session {
+	if tok == "" {
+		tok = api.AccessToken
+	}
+	return &Session{AccessToken: tok}
+}
+
+type Session struct {
+	AccessToken string
+	UserID      string
+	UserEmail   string
+}
+
 // getAPIURL prepares URL instance with defined method
-func (api *API) getAPIURL(method string) *url.URL {
+func (s *Session) getAPIURL(method string) *url.URL {
 	q := url.Values{
 		"v":            {Version},
 		"https":        {strconv.Itoa(HTTPS)},
-		"access_token": {api.AccessToken},
+		"access_token": {s.AccessToken},
 	}.Encode()
 	apiURL, _ := url.Parse(APIURL + method + "?" + q)
 	return apiURL
