@@ -28,7 +28,11 @@ func (api *API) AuthURL(state string) string {
 	query := api.requestTokenURL.Query()
 	query.Set("client_id", api.AppID)
 	if len(api.Scope) > 0 {
-		query.Set("scope", strings.Join(api.Scope, ","))
+		sarr := make([]string,len(api.Scope))
+		for i := range api.Scope {
+			sarr[i] = api.Scope[i].String()
+		}
+		query.Set("scope", strings.Join(sarr, ","))
 	}
 	query.Set("redirect_uri", api.callbackURL.String())
 	query.Set("display", "page")

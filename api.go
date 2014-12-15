@@ -19,7 +19,7 @@ var (
 type API struct {
 	AppID           string
 	Secret          string
-	Scope           []string
+	Scope           []Scope
 	AccessToken     string
 	Expiry          time.Time
 	UserID          string
@@ -30,7 +30,7 @@ type API struct {
 }
 
 // NewAPI creates instance of API
-func NewAPI(appID, secret string, scope []string, callback string) *API {
+func NewAPI(appID, secret string, scope []Scope, callback string) *API {
 	var err error
 	var callbackURL *url.URL
 

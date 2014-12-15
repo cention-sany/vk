@@ -13,10 +13,6 @@ var (
 )
 
 type (
-	// Response from users.get
-	Response struct {
-		Response []UserInfo
-	}
 	// UserInfo contains user information
 	// TODO improve fields list from here: http://vk.com/dev/fields
 	UserInfo struct {
@@ -129,7 +125,9 @@ func (s *Session) UsersGet(userIds []string, fields []string, nameCase string) (
 
 	var err error
 	var resp *http.Response
-	var response Response
+	var response struct {
+		Response []UserInfo
+	}
 
 	if resp, err = http.Get(endpoint.String()); err != nil {
 		return nil, err
