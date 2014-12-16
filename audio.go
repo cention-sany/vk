@@ -12,7 +12,7 @@ type Audio struct {
 	Owner    int    `json:"owner_id"`
 	Artist   string `json:"artist"`
 	Title    string `json:"title"`
-	Duration int    `json:"duration"` // in sec
+	Duration int    `json:"duration"` // in sec // TODO: parse to time.Duration
 	Url      string `json:"url"`
 	Lyrics   int    `json:"lyrics_id"`
 	Album    int    `json:"album_id"`
@@ -20,9 +20,9 @@ type Audio struct {
 }
 
 type Playlist struct {
-	Id       int    `json:"id"`
-	Owner    int    `json:"owner_id"`
-	Title    string `json:"title"`
+	Id    int    `json:"id"`
+	Owner int    `json:"owner_id"`
+	Title string `json:"title"`
 }
 
 func (s *Session) AudioSearch(qu string, count int, autoCompl, perfOnly bool) ([]Audio, error) {
@@ -48,7 +48,7 @@ func (s *Session) AudioSearch(qu string, count int, autoCompl, perfOnly bool) ([
 	}
 
 	var audio []Audio
-	list := apiList{
+	list := ApiList{
 		Items: &audio,
 	}
 	if err := s.CallAPI("audio.search", vals, &list); err != nil {
@@ -64,14 +64,14 @@ func (s *Session) AudioGetById(ids [][2]int) ([]Audio, error) {
 
 	var audios = make([]string, len(ids))
 	for i, v := range ids {
-		audios[i] = fmt.Sprintf("%d_%d",v[0],v[1])
+		audios[i] = fmt.Sprintf("%d_%d", v[0], v[1])
 	}
 
 	vals := make(url.Values)
-	vals.Set("audios", strings.Join(audios,","))
+	vals.Set("audios", strings.Join(audios, ","))
 
 	var audio []Audio
-	list := apiList{
+	list := ApiList{
 		Items: &audio,
 	}
 	if err := s.CallAPI("audio.getById", vals, &list); err != nil {
@@ -93,7 +93,7 @@ func (s *Session) AudioGetAlbums(owner int, offset, count int) ([]Playlist, erro
 	}
 
 	var plists []Playlist
-	list := apiList{
+	list := ApiList{
 		Items: &plists,
 	}
 	if err := s.CallAPI("audio.getAlbums", vals, &list); err != nil {
@@ -111,7 +111,7 @@ func (s *Session) audioGetFromAny(vals url.Values, offset, count int) ([]Audio, 
 	}
 
 	var audio []Audio
-	list := apiList{
+	list := ApiList{
 		Items: &audio,
 	}
 	if err := s.CallAPI("audio.get", vals, &list); err != nil {
@@ -146,6 +146,6 @@ func (s *Session) AudioGet(ids ...int) ([]Audio, error) {
 	}
 
 	vals := make(url.Values)
-	vals.Set("audio_ids", JoinIntArr(ids))
+	vals.Set("audio_ids", IdList(ids).String())
 	return s.audioGetFromAny(vals, 0, len(ids))
 }

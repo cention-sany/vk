@@ -1,20 +1,22 @@
 package vk
 
 import (
+	"encoding/json"
+	"errors"
+	"fmt"
 	"net/http"
 	"net/url"
 	"strconv"
 	"time"
-	"encoding/json"
-	"errors"
-	"fmt"
 )
 
 var (
 	// Version of VK API
 	Version = "5.27"
 	// APIURL is a base to make API calls
-	APIURL = "https://api.vk.com/method/"
+	APIURL       = "https://api.vk.com/method/"
+	reqTokURL, _ = url.Parse("https://oauth.vk.com/authorize")
+	accTokURL, _ = url.Parse("https://oauth.vk.com/access_token")
 	// HTTPS defines if use https instead of http. 1 - use https. 0 - use http
 	HTTPS = 1
 	Debug = false
@@ -48,8 +50,6 @@ func NewAPI(appID, secret string, scope []Scope, callback string) *API {
 	if callbackURL, err = url.Parse(callback); err != nil {
 		return nil
 	}
-	reqTokURL, _ := url.Parse("https://oauth.vk.com/authorize")
-	accTokURL, _ := url.Parse("https://oauth.vk.com/access_token")
 
 	return &API{
 		AppID:           appID,
@@ -96,12 +96,12 @@ func (s *Session) CallAPI(method string, params url.Values, out interface{}) err
 	endpoint.RawQuery = query.Encode()
 
 	var (
-		err  error
-		resp *http.Response
+		err      error
+		resp     *http.Response
 		response struct {
-			Error struct{
-				Code int `json:"error_code"`
-				Msg string `json:"error_msg"`
+			Error struct {
+				Code int    `json:"error_code"`
+				Msg  string `json:"error_msg"`
 			} `json:"error"`
 			Response json.RawMessage `json:"response"`
 		}
@@ -123,7 +123,7 @@ func (s *Session) CallAPI(method string, params url.Values, out interface{}) err
 		return errors.New(response.Error.Msg)
 	}
 	if Debug {
-		fmt.Printf("vk api resp: %s\n",string(response.Response))
+		fmt.Printf("vk api resp: %s\n", string(response.Response))
 	}
 	if err = json.Unmarshal(response.Response, out); err != nil {
 		return err
@@ -131,7 +131,7 @@ func (s *Session) CallAPI(method string, params url.Values, out interface{}) err
 	return nil
 }
 
-type apiList struct {
-	Count int `json:"count"`
-	Items interface {} `json:"items"`
+type ApiList struct {
+	Count int         `json:"count"`
+	Items interface{} `json:"items"`
 }
