@@ -9,7 +9,6 @@ import (
 	"strconv"
 	"strings"
 	"time"
-	"fmt"
 )
 
 // AccessToken response from VK
@@ -73,7 +72,7 @@ func (api *API) Authenticate(code string) (*Session, error) {
 
 	sess := &Session{
 		AccessToken: tok.AccessToken,
-		UserID: fmt.Sprint(tok.UserID),
+		UserID: tok.UserID,
 		UserEmail: tok.UserEmail,
 	}
 	tok.ExpiresIn *= time.Second

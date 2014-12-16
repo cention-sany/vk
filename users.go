@@ -1,10 +1,10 @@
 package vk
 
 import (
-	"encoding/json"
 	"errors"
-	"net/http"
 	"strings"
+	"net/url"
+	"fmt"
 )
 
 var (
@@ -108,7 +108,7 @@ type (
 //     name_case - choose one of nom, gen, dat, acc, ins, abl.
 //     nom is default
 //
-func (s *Session) UsersGet(userIds []string, fields []string, nameCase string) ([]UserInfo, error) {
+func (s *Session) UsersGet(userIds []int, fields []string, nameCase string) ([]UserInfo, error) {
 	if len(userIds) == 0 {
 		return nil, errors.New("you must pass at least one id or screen_name")
 	}
@@ -116,34 +116,28 @@ func (s *Session) UsersGet(userIds []string, fields []string, nameCase string) (
 		return nil, errors.New("the only available name cases are: " + strings.Join(NameCases, ", "))
 	}
 
-	endpoint := s.getAPIURL("users.get")
-	query := endpoint.Query()
-	query.Set("user_ids", strings.Join(userIds, ","))
-	query.Set("fields", strings.Join(fields, ","))
-	query.Set("name_case", nameCase)
-	endpoint.RawQuery = query.Encode()
-
-	var err error
-	var resp *http.Response
-	var response struct {
-		Response []UserInfo
+	var strids = make([]string,len(userIds))
+	for i, v := range userIds {
+		strids[i] = fmt.Sprint(v)
 	}
 
-	if resp, err = http.Get(endpoint.String()); err != nil {
+	vals := make(url.Values)
+	vals.Set("user_ids", JoinIntArr(userIds))
+	vals.Set("fields", strings.Join(fields, ","))
+	vals.Set("name_case", nameCase)
+
+	var users []UserInfo
+
+	if err := s.CallAPI("users.get", vals, &users); err != nil {
 		return nil, err
 	}
-	defer resp.Body.Close()
-
-	if err = json.NewDecoder(resp.Body).Decode(&response); err != nil {
-		return nil, err
-	}
-	return response.Response, nil
+	return users, nil
 }
 
 // User returns current user info with call to UsersGet
 func (s *Session) User(fields []string, nameCase string) (UserInfo, error) {
 	var u UserInfo
-	list, err := s.UsersGet([]string{s.UserID}, fields, nameCase)
+	list, err := s.UsersGet([]int{s.UserID}, fields, nameCase)
 	if err != nil {
 		return u, err
 	}

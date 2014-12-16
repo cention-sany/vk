@@ -1,18 +1,23 @@
 package vk
 
 import (
+	"net/http"
 	"net/url"
 	"strconv"
 	"time"
+	"encoding/json"
+	"errors"
+	"fmt"
 )
 
 var (
 	// Version of VK API
-	Version = "5.12"
+	Version = "5.27"
 	// APIURL is a base to make API calls
 	APIURL = "https://api.vk.com/method/"
 	// HTTPS defines if use https instead of http. 1 - use https. 0 - use http
 	HTTPS = 1
+	Debug = false
 )
 
 // API holds data to use for communication
@@ -65,7 +70,7 @@ func (api *API) NewSession(tok string) *Session {
 
 type Session struct {
 	AccessToken string
-	UserID      string
+	UserID      int
 	UserEmail   string
 }
 
@@ -78,4 +83,55 @@ func (s *Session) getAPIURL(method string) *url.URL {
 	}.Encode()
 	apiURL, _ := url.Parse(APIURL + method + "?" + q)
 	return apiURL
+}
+
+func (s *Session) CallAPI(method string, params url.Values, out interface{}) error {
+	endpoint := s.getAPIURL(method)
+	query := endpoint.Query()
+	for k, v := range params {
+		if len(v) > 0 {
+			query.Set(k, v[0])
+		}
+	}
+	endpoint.RawQuery = query.Encode()
+
+	var (
+		err  error
+		resp *http.Response
+		response struct {
+			Error struct{
+				Code int `json:"error_code"`
+				Msg string `json:"error_msg"`
+			} `json:"error"`
+			Response json.RawMessage `json:"response"`
+		}
+	)
+	//response.Response = out
+
+	if Debug {
+		fmt.Printf("vk call: %s\n", endpoint.String())
+	}
+	if resp, err = http.Get(endpoint.String()); err != nil {
+		return err
+	}
+	defer resp.Body.Close()
+
+	if err = json.NewDecoder(resp.Body).Decode(&response); err != nil {
+		return err
+	}
+	if response.Error.Code != 0 {
+		return errors.New(response.Error.Msg)
+	}
+	if Debug {
+		fmt.Printf("vk api resp: %s\n",string(response.Response))
+	}
+	if err = json.Unmarshal(response.Response, out); err != nil {
+		return err
+	}
+	return nil
+}
+
+type apiList struct {
+	Count int `json:"count"`
+	Items interface {} `json:"items"`
 }
