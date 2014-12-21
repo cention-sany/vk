@@ -71,10 +71,7 @@ func (s *Session) AudioGetById(ids [][2]int) ([]Audio, error) {
 	vals.Set("audios", strings.Join(audios, ","))
 
 	var audio []Audio
-	list := ApiList{
-		Items: &audio,
-	}
-	if err := s.CallAPI("audio.getById", vals, &list); err != nil {
+	if err := s.CallAPI("audio.getById", vals, &audio); err != nil {
 		return nil, err
 	}
 	return audio, nil

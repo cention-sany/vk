@@ -110,7 +110,7 @@ type (
 		Online       Bool     `json:"online,omitempty"`
 		OnlineMobile Bool     `json:"online_mobile,omitempty"`
 		OnlineApp    Bool     `json:"online_app,omitempty"`
-		Lists        IdList   `json:"lists,omitempty"`
+		Lists        []int    `json:"lists,omitempty"`
 		Domain       string   `json:"domain,omitempty"`
 		HasMobile    Bool     `json:"has_mobile,omitempty"`
 		Contacts     struct {
