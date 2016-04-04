@@ -1,8 +1,8 @@
-# vk [![GoDoc](https://godoc.org/github.com/OShalakhin/vk?status.png)](https://godoc.org/github.com/OShalakhin/vk)
+# vk [![GoDoc](https://godoc.org/github.com/cention-sany/vk?status.png)](https://godoc.org/github.com/cention-sany/vk)
 
 Go package for VKontakte API. It is work in progress and API may change.
 
-VK API version **5.12**
+VK API version **5.27**
 
 ## TODO
 
