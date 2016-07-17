@@ -52,6 +52,21 @@ func (b *Bool) UnmarshalJSON(s []byte) error {
 	return err
 }
 
+type Int int
+
+func (i Int) MarshalJSON() ([]byte, error) {
+	return []byte(strconv.Itoa(int(i))), nil
+}
+
+func (i *Int) UnmarshalJSON(s []byte) error {
+	q, err := strconv.ParseInt(string(s), 10, 32)
+	if err != nil {
+		return err
+	}
+	*i = Int(q)
+	return nil
+}
+
 // IdList is a list of comma-separated ids
 type IdList []int
 

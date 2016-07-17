@@ -21,13 +21,15 @@ type AccessToken struct {
 	ErrorDescription string        `json:"error_description"`
 }
 
-// AuthURL generates URL to authenticate via OAuth
-func (api *API) AuthURL(state string) string {
-
+// AuthURL generates URL to authenticate via OAuth. v support option
+// 'responseTyp string' and 'groupId int' (sequence as shown). responseTyp can
+// either be "token" and "code" where default is "code". 'groupId' is to
+// generate URL for group authorization.
+func (api *API) AuthURL(state string, v ...interface{}) string {
 	query := api.requestTokenURL.Query()
 	query.Set("client_id", api.AppID)
 	if len(api.Scope) > 0 {
-		sarr := make([]string,len(api.Scope))
+		sarr := make([]string, len(api.Scope))
 		for i := range api.Scope {
 			sarr[i] = api.Scope[i].String()
 		}
@@ -37,8 +39,23 @@ func (api *API) AuthURL(state string) string {
 	query.Set("display", "page")
 	query.Set("v", Version)
 	query.Set("response_type", "code")
+	if v != nil {
+		sizeV := len(v)
+		if sizeV > 0 {
+			if responseTyp, ok := v[0].(string); ok && responseTyp == "token" {
+				query.Set("response_type", "token")
+			}
+			if sizeV > 1 {
+				if groupId, ok := v[1].(int); ok && groupId > 0 {
+					query.Set("group_ids", strconv.Itoa(groupId))
+				} else if groupId, ok := v[1].(string); ok {
+					query.Set("group_ids", groupId)
+				}
+			}
+		}
+	}
+	query.Set("state", state)
 	api.requestTokenURL.RawQuery = query.Encode()
-
 	return api.requestTokenURL.String()
 }
 
@@ -72,8 +89,8 @@ func (api *API) Authenticate(code string) (*Session, error) {
 
 	sess := &Session{
 		AccessToken: tok.AccessToken,
-		UserID: tok.UserID,
-		UserEmail: tok.UserEmail,
+		UserID:      tok.UserID,
+		UserEmail:   tok.UserEmail,
 	}
 	tok.ExpiresIn *= time.Second
 	api.UserID = strconv.Itoa(tok.UserID)

@@ -8,6 +8,7 @@ import (
 )
 
 type Audio struct {
+	ReceiveContent
 	Id       int    `json:"id"`
 	Owner    int    `json:"owner_id"`
 	Artist   string `json:"artist"`
