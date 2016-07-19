@@ -24,7 +24,7 @@ type (
 			Pid       int     `json:"pid"`
 			Title     string  `json:"title"`
 			Latitude  float32 `json:"latitude"`
-			longitude float32 `json:"longitude"`
+			Longitude float32 `json:"longitude"`
 			Type      string  `json:"type"`
 			Country   int     `json:"country"`
 			City      int     `json:"city"`

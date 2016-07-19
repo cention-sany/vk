@@ -27,8 +27,12 @@ const (
 
 type (
 	Attachment struct {
-		Type string `json:"type"`
-		raw  []byte
+		Type string          `json:"type"`
+		P    *Photo          `json:"photo"`
+		V    *Video          `json:"video"`
+		A    *Audio          `json:"audio"`
+		D    *Doc            `json:"doc"`
+		G    json.RawMessage `json:"geo"`
 	}
 
 	ReceiveContent string
@@ -92,7 +96,6 @@ func GetAttachment(r []byte) (*Attachment, error) {
 	if err := json.Unmarshal(r, v); err != nil {
 		return nil, err
 	}
-	v.raw = r
 	return v, nil
 }
 
@@ -118,14 +121,23 @@ func (r ReceiveContent) Content() (io.ReadCloser, error) {
 // Implement json.Unmarshaler, so the parsing on Post can be parsed directly.
 // TODO: use Decoder struct to implment attachment unmarshal.
 func (a *Attachment) UnmarshalJSON(b []byte) error {
-	v := struct {
-		Type string `json:"type"`
-	}{}
+	var v struct {
+		Type string          `json:"type"`
+		P    *Photo          `json:"photo"`
+		V    *Video          `json:"video"`
+		A    *Audio          `json:"audio"`
+		D    *Doc            `json:"doc"`
+		G    json.RawMessage `json:"geo"`
+	}
 	if err := json.Unmarshal(b, &v); err != nil {
 		return err
 	}
 	a.Type = v.Type
-	copy(a.raw, b)
+	a.P = v.P
+	a.V = v.V
+	a.A = v.A
+	a.D = v.D
+	a.G = v.G
 	return nil
 }
 
@@ -133,10 +145,7 @@ func (a *Attachment) Photo() (*Photo, error) {
 	if a.Type != AT_Photo {
 		return nil, errors.New("vk: not photo json")
 	}
-	v := new(Photo)
-	if err := json.Unmarshal(a.raw, v); err != nil {
-		return nil, err
-	}
+	v := a.P
 	var s, url string
 	if v.Photo2560 != "" {
 		url = v.Photo2560
@@ -172,10 +181,7 @@ func (a *Attachment) Video() (*Video, error) {
 	if a.Type != AT_Video {
 		return nil, errors.New("vk: not video json")
 	}
-	v := new(Video)
-	if err := json.Unmarshal(a.raw, v); err != nil {
-		return nil, err
-	}
+	v := a.V
 	var s, url string
 	if v.Photo800 != "" {
 		url = v.Photo800
@@ -202,10 +208,7 @@ func (a *Attachment) Audio() (*Audio, error) {
 	if a.Type != AT_Audio {
 		return nil, errors.New("vk: not audio json")
 	}
-	v := new(Audio)
-	if err := json.Unmarshal(a.raw, v); err != nil {
-		return nil, err
-	}
+	v := a.A
 	if v.Url != "" {
 		v.ReceiveContent = ReceiveContent(v.Url)
 	}
@@ -216,10 +219,7 @@ func (a *Attachment) Doc() (*Doc, error) {
 	if a.Type != AT_Doc {
 		return nil, errors.New("vk: not doc json")
 	}
-	v := new(Doc)
-	if err := json.Unmarshal(a.raw, v); err != nil {
-		return nil, err
-	}
+	v := a.D
 	var s, url string
 	if v.Url != "" {
 		url = v.Url
