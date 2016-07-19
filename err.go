@@ -37,6 +37,7 @@ type Error struct {
 	Msg        string `json:"error_msg"`
 	CaptchaSId string `json:"captcha_sid"`
 	CaptchaImg string `json:"captcha_img"`
+	Redirect   string `json:"redirect_uri"`
 }
 
 // Implement error interface
