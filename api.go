@@ -21,7 +21,7 @@ const (
 var (
 	Debug = false
 	// Version of VK API
-	Version = "5.52"
+	Version = "5.53"
 	// APIURL is a base to make API calls
 	APIURL = "https://api.vk.com/method/"
 	// HTTPS defines if use https instead of http. 1 - use https. 0 - use http
