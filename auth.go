@@ -2,8 +2,11 @@
 package vk
 
 import (
+	"bytes"
 	"encoding/json"
 	"errors"
+	"io"
+	"log"
 	"net/http"
 	"net/url"
 	"strconv"
@@ -64,7 +67,6 @@ func (api *API) Authenticate(code string) (*Session, error) {
 	var resp *http.Response
 	var err error
 	var tok AccessToken
-
 	query := api.accessTokenURL.Query()
 	query = url.Values{
 		"client_id":     {api.AppID},
@@ -73,20 +75,20 @@ func (api *API) Authenticate(code string) (*Session, error) {
 		"redirect_uri":  {api.callbackURL.String()},
 	}
 	api.accessTokenURL.RawQuery = query.Encode()
-
 	if resp, err = http.Get(api.accessTokenURL.String()); err != nil {
 		return nil, err
 	}
 	defer resp.Body.Close()
-
-	if err = json.NewDecoder(resp.Body).Decode(&tok); err != nil {
+	var r io.Reader
+	b := new(bytes.Buffer)
+	r = io.TeeReader(resp.Body, b)
+	if err = json.NewDecoder(r).Decode(&tok); err != nil {
 		return nil, err
 	}
-
 	if tok.Error != "" {
 		return nil, errors.New(tok.ErrorDescription)
 	}
-
+	log.Println("debug: authenticated result:", b.String())
 	sess := &Session{
 		AccessToken: tok.AccessToken,
 		UserID:      tok.UserID,
@@ -97,6 +99,6 @@ func (api *API) Authenticate(code string) (*Session, error) {
 	api.UserEmail = tok.UserEmail
 	api.AccessToken = tok.AccessToken
 	api.Expiry = time.Now().Add(tok.ExpiresIn)
-
+	api.Raw = b.Bytes()
 	return sess, nil
 }

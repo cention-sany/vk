@@ -42,6 +42,7 @@ type API struct {
 	callbackURL     *url.URL
 	requestTokenURL *url.URL
 	accessTokenURL  *url.URL
+	Raw             []byte
 }
 
 type resolveCaptcha struct {
