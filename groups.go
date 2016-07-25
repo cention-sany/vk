@@ -1,6 +1,9 @@
 package vk
 
-import "encoding/json"
+import (
+	"encoding/json"
+	"io"
+)
 
 type (
 	// Group contains community information (https://vk.com/dev/fields_groups)
@@ -42,4 +45,38 @@ type (
 		Status         string          `json:"status,omitempty"`
 		Contacts       string          `json:"contacts,omitempty"`
 	}
+
+	SmallGroups struct {
+		Count int           `json:"count"`
+		Items []*SmallGroup `json:"items"`
+	}
+
+	SmallGroup struct {
+		Id      int    `json:"id"`
+		Name    string `json:"name"`
+		Type    string `json:"type"`
+		IsAdmin Bool   `json:"is_admin"`
+	}
 )
+
+type GroupLooper interface {
+	More() (*SmallGroup, error)
+	Size() int
+}
+
+func (s *SmallGroups) Size() int {
+	return s.Count
+}
+
+func (s *SmallGroups) More() (*SmallGroup, error) {
+	if len(s.Items) <= 0 {
+		return nil, io.EOF
+	}
+	sg := s.Items[0]
+	s.Items = s.Items[1:]
+	return sg, nil
+}
+
+func NewGroupLoop(s *SmallGroups) GroupLooper {
+	return s
+}

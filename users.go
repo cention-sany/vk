@@ -185,6 +185,11 @@ type (
 		ScreenName      string      `json:"screen_name,omitempty"`
 		MaidenName      string      `json:"maiden_name,omitempty"`
 	}
+	SmallUser struct {
+		Id        int    `json:"id"`
+		FirstName string `json:"first_name"`
+		LastName  string `json:"last_name"`
+	}
 	// GeoPlace contains geographical information like City, Country
 	GeoPlace struct {
 		Id    int    `json:"id"`
