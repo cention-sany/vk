@@ -26,8 +26,8 @@ const (
 type (
 	UploadServer struct {
 		UploadUrl string `json:"upload_url"`
-		AlbumId   int    `json:"album_id"`
-		UserId    int    `json:"user_id"`
+		AlbumId   int    `json:"aid"`
+		UserId    int    `json:"mid"`
 		OwnerId   int    `json:"owner_id"`
 		AccessKey string `json:"access_key"`
 	}

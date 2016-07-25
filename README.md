@@ -2,7 +2,7 @@
 
 Go package for VKontakte API. It is work in progress and API may change.
 
-VK API version **5.53**
+VK API version **4.104**
 
 ## TODO
 

@@ -86,7 +86,7 @@ const (
 type (
 	// User contains user information (https://vk.com/dev/fields)
 	User struct {
-		Id          int    `json:"id"`
+		Id          int    `json:"uid"`
 		FirstName   string `json:"first_name"`
 		LastName    string `json:"last_name"`
 		Deactivated string `json:"deactivated"`
@@ -184,6 +184,11 @@ type (
 		TimeZone        int         `json:"timezone,omitempty"`
 		ScreenName      string      `json:"screen_name,omitempty"`
 		MaidenName      string      `json:"maiden_name,omitempty"`
+	}
+	SmallUser struct {
+		Id        int    `json:"uid"`
+		FirstName string `json:"first_name"`
+		LastName  string `json:"last_name"`
 	}
 	// GeoPlace contains geographical information like City, Country
 	GeoPlace struct {

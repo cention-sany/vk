@@ -1,12 +1,15 @@
 package vk
 
-import "encoding/json"
+import (
+	"encoding/json"
+	"io"
+)
 
 type (
 	// Group contains community information (https://vk.com/dev/fields_groups)
 	Group struct {
 		// default fields
-		Id          int    `json:"id"`
+		Gid         int    `json:"gid"`
 		Name        string `json:"name"`
 		ScreenName  string `json:"screen_name"`
 		IsClosed    Bool   `json:"is_closed"`
@@ -42,4 +45,55 @@ type (
 		Status         string          `json:"status,omitempty"`
 		Contacts       string          `json:"contacts,omitempty"`
 	}
+
+	SmallGroups []json.RawMessage
+
+	SmallGroup struct {
+		Id      int    `json:"gid"`
+		Name    string `json:"name"`
+		Type    string `json:"type"`
+		IsAdmin Bool   `json:"is_admin"`
+	}
 )
+
+type GroupLooper interface {
+	More() (*SmallGroup, error)
+	Size() int
+}
+
+type groupLoop struct {
+	total, curr int
+	s           *SmallGroups
+}
+
+func (g *groupLoop) Size() int {
+	return g.total
+}
+
+func (g *groupLoop) More() (*SmallGroup, error) {
+	if g.curr-1 >= g.total {
+		return nil, io.EOF
+	}
+	var single SmallGroup
+	b, err := (*g.s)[g.curr].MarshalJSON()
+	err = json.Unmarshal(b, &single)
+	if err != nil {
+		g.curr++
+		return nil, err
+	}
+	g.curr++
+	return &single, nil
+}
+
+func NewGroupLoop(s *SmallGroups) GroupLooper {
+	if len(*s) <= 1 {
+		return nil
+	}
+	var n int
+	b, err := (*s)[0].MarshalJSON()
+	err = json.Unmarshal(b, &n)
+	if err != nil {
+		return nil
+	}
+	return &groupLoop{total: n, curr: 1, s: s}
+}
