@@ -747,7 +747,7 @@ func (s *Session) UploadMultiPMPhotos(ps, ns []string, gid int) ([]string, error
 	if ps == nil {
 		return nil, nil
 	}
-	return multiUploads(s, ps, nil, getPMPhotoUploader(gid))
+	return multiUploads(s, ps, ns, getPMPhotoUploader(gid))
 }
 
 type AttachmentUploader interface {
