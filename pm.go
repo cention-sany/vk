@@ -31,6 +31,7 @@ type (
 		Emoji       Bool          `json:"emoji"`
 		Deleted     Bool          `json:"deleted"`
 		Fwd         []*Message    `json:"fwd_messages"`
+		G           *Geo          `json:"geo"`
 		// for group chat
 		ChatId     int    `json:"chat_id"`
 		ChatActive []int  `json:"chat_active"`
