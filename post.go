@@ -7,11 +7,13 @@ import (
 )
 
 const (
-	PostSrc_VK     = "vk"
-	PostSrc_Widget = "widget"
-	PostSrc_Api    = "api"
-	PostSrc_Rss    = "rss"
-	PostSrc_Sms    = "sms"
+	PostSrc_VK       = "vk"
+	PostSrc_Widget   = "widget"
+	PostSrc_Api      = "api"
+	PostSrc_Rss      = "rss"
+	PostSrc_Sms      = "sms"
+	PostType_Post    = "post"
+	PostType_Suggest = "suggest"
 )
 
 type (
@@ -48,19 +50,27 @@ type (
 			Data string `json:"data"`
 		} `json:"post_source"`
 		Attachments []*Attachment `json:"attachments"`
-		Geo         struct {
-			PlaceId   int             `json:"place_id"`
-			Title     string          `json:"title"`
-			Type      string          `json:"type"`
-			CountryId int             `json:"country_id"`
-			CityId    int             `json:"city_id"`
-			Address   string          `json:"address"`
-			Showmap   json.RawMessage `json:"showmap"`
-		} `json:"geo"`
-		SignerId    int    `json:"signer_id"`
-		CopyHistory []Post `json:"copy_history"`
-		CanPin      Bool   `json:"can_pin"`
-		IsPinned    Bool   `json:"is_pinned"`
+		G           *Geo          `json:"geo"`
+		SignerId    int           `json:"signer_id"`
+		CopyHistory []Post        `json:"copy_history"`
+		CanPin      Bool          `json:"can_pin"`
+		IsPinned    Bool          `json:"is_pinned"`
+	}
+
+	Geo struct {
+		Type  string `json:"type"`
+		Coor  string `json:"coordinates"`
+		Place struct {
+			Id        int     `json:"id"`
+			Title     string  `json:"title"`
+			Latitude  float32 `json:"latitude"`
+			Longitude float32 `json:"longitude"`
+			Created   int64   `json:"created"`
+			Icon      string  `json:"icon"`
+			Country   string  `json:"country"`
+			City      string  `json:"city"`
+		} `json:"place"`
+		Showmap Bool `json:"showmap"`
 	}
 
 	// https://vk.com/dev/comment_object
