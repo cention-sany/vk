@@ -28,6 +28,7 @@ const (
 type (
 	Attachment struct {
 		Type string          `json:"type"`
+		Pl   *Poll           `json:"poll"`
 		P    *Photo          `json:"photo"`
 		V    *Video          `json:"video"`
 		A    *Audio          `json:"audio"`
@@ -36,6 +37,22 @@ type (
 	}
 
 	ReceiveContent string
+
+	Poll struct {
+		Id       int    `json:"id"`
+		OwnerId  int    `json:"owner_id"`
+		Created  int64  `json:"created"`
+		Question string `json:"question"`
+		Votes    int    `json:"votes"`
+		AnswerId int    `json:"answer_id"`
+		Answers  []struct {
+			Id    int     `json:"id"`
+			Text  string  `json:"text"`
+			Votes int     `json:"votes"`
+			Rate  float32 `json:"rate"`
+		} `json:"answers"`
+		Anonymous int `json:"anonymous"`
+	}
 
 	Photo struct {
 		ReceiveContent
@@ -123,6 +140,7 @@ func (r ReceiveContent) Content() (io.ReadCloser, error) {
 func (a *Attachment) UnmarshalJSON(b []byte) error {
 	var v struct {
 		Type string          `json:"type"`
+		Pl   *Poll           `json:"poll"`
 		P    *Photo          `json:"photo"`
 		V    *Video          `json:"video"`
 		A    *Audio          `json:"audio"`
@@ -133,6 +151,7 @@ func (a *Attachment) UnmarshalJSON(b []byte) error {
 		return err
 	}
 	a.Type = v.Type
+	a.Pl = v.Pl
 	a.P = v.P
 	a.V = v.V
 	a.A = v.A
@@ -234,4 +253,11 @@ func (a *Attachment) Doc() (*Doc, error) {
 		v.ReceiveContent = ReceiveContent(url)
 	}
 	return v, nil
+}
+
+func (a *Attachment) Poll() (*Poll, error) {
+	if a.Type != AT_Poll {
+		return nil, errors.New("vk: not poll json")
+	}
+	return a.Pl, nil
 }
