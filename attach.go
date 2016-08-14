@@ -12,6 +12,7 @@ import (
 const (
 	// attachment type
 	AT_Photo       = "photo"
+	AT_Sticker     = "sticker"
 	AT_PostedPhoto = "posted_photo"
 	AT_Video       = "video"
 	AT_Audio       = "audio"
@@ -30,6 +31,7 @@ type (
 		Type string          `json:"type"`
 		Pl   *Poll           `json:"poll"`
 		P    *Photo          `json:"photo"`
+		S    *Sticker        `json:"sticker"`
 		V    *Video          `json:"video"`
 		A    *Audio          `json:"audio"`
 		D    *Doc            `json:"doc"`
@@ -70,6 +72,19 @@ type (
 		Text      string `json:"text"`
 		Date      int64  `json:"date"`
 		AccessKey string `json:"access_key"`
+	}
+
+	Sticker struct {
+		ReceiveContent
+		Id        int    `json:"id"`
+		ProductId int    `json:"product_id"`
+		Photo64   string `json:"photo_64"`
+		Photo128  string `json:"photo_128"`
+		Photo256  string `json:"photo_256"`
+		Photo352  string `json:"photo_352"`
+		Photo512  string `json:"photo_512"`
+		Width     int    `json:"width"`
+		Height    int    `json:"height"`
 	}
 
 	Video struct {
@@ -142,6 +157,7 @@ func (a *Attachment) UnmarshalJSON(b []byte) error {
 		Type string          `json:"type"`
 		Pl   *Poll           `json:"poll"`
 		P    *Photo          `json:"photo"`
+		S    *Sticker        `json:"sticker"`
 		V    *Video          `json:"video"`
 		A    *Audio          `json:"audio"`
 		D    *Doc            `json:"doc"`
@@ -153,6 +169,7 @@ func (a *Attachment) UnmarshalJSON(b []byte) error {
 	a.Type = v.Type
 	a.Pl = v.Pl
 	a.P = v.P
+	a.S = v.S
 	a.V = v.V
 	a.A = v.A
 	a.D = v.D
@@ -188,6 +205,29 @@ func (a *Attachment) Photo() (*Photo, error) {
 			}
 			url = fmt.Sprint(url, s)
 		}
+		v.ReceiveContent = ReceiveContent(url)
+	}
+	return v, nil
+}
+
+func (a *Attachment) Sticker() (*Sticker, error) {
+	if a.Type != AT_Sticker {
+		return nil, errors.New("vk: not sticker json")
+	}
+	v := a.S
+	var url string
+	if v.Photo512 != "" {
+		url = v.Photo512
+	} else if v.Photo352 != "" {
+		url = v.Photo352
+	} else if v.Photo256 != "" {
+		url = v.Photo256
+	} else if v.Photo128 != "" {
+		url = v.Photo128
+	} else if v.Photo64 != "" {
+		url = v.Photo64
+	}
+	if url != "" {
 		v.ReceiveContent = ReceiveContent(url)
 	}
 	return v, nil
