@@ -681,15 +681,15 @@ func multiUploads(s *Session, ps, ns []string, u uploader) ([]string, error) {
 // UploadMultiAudios upload multiple VK audio attachments. It may call multiple
 // times of the API. ps is arary of path string and ns is the array of the file
 // name respectively to ps. ns is optional and can be nil. ns must all end with
-// dot extension format.
-func (s *Session) UploadMultiAudios(ps, ns []string) ([]string, error) {
+// dot extension format. VK only allow mp3 format to be uploaded as audio type.
+func (s *Session) UploadMultiAudios(ps, ns []string, gid int) ([]string, error) {
 	if ps == nil {
 		return nil, nil
 	}
-	return multiUploads(s, ps, ns, getAudioUploader(0))
+	return multiUploads(s, ps, ns, getAudioUploader(gid))
 }
 
-// UploadMultiAudios upload multiple VK audio attachments. It may call multiple
+// UploadMultiDocs upload multiple VK doc attachments. It may call multiple
 // times of the API. ps is array of path string and ns is the array of the file
 // name respectively to ps. ns is optional and can be nil. ns must all end with
 // dot extension format.
@@ -716,7 +716,9 @@ func (s *Session) UploadMultiVideos(ps, ns []string, owner int) ([]string, error
 		return nil, nil
 	}
 	v := url.Values{}
-	v.Set("group_id", strconv.Itoa(owner))
+	if owner > 0 {
+		v.Set("group_id", strconv.Itoa(owner))
+	}
 	return multiUploads(s, ps, ns, newVideoUploader(v, owner))
 }
 
@@ -853,7 +855,7 @@ func multiUploadNonPhoto(a *attachUp, s *Session, gid int) error {
 	var err error
 	if gid == 0 {
 		// upload to user's
-		ss, err = s.UploadMultiAudios(a.a, a.an)
+		ss, err = s.UploadMultiAudios(a.a, a.an, 0)
 		if err != nil {
 			return err
 		}
@@ -902,12 +904,12 @@ func (a *attachPM) AddVideo(p, n string) AttachmentUploader {
 }
 
 func (a *attachPM) AddAudio(p, n string) AttachmentUploader {
-	a.attachUp.AddDoc(p, n)
+	a.attachUp.AddAudio(p, n)
 	return a
 }
 
 func (a *attachPM) AddAudios(ps []string) AttachmentUploader {
-	a.attachUp.AddDocs(ps)
+	a.attachUp.AddAudios(ps)
 	return a
 }
 
@@ -932,14 +934,20 @@ func (a *attachPM) AddPhotos(ps []string) AttachmentUploader {
 }
 
 func (a *attachPM) Upload() (string, error) {
-	gid := a.attachUp.gid
 	userSess := a.attachUp.sess
-	ss, err := userSess.UploadMultiVideos(a.v, a.vn, gid)
+	ss, err := userSess.UploadMultiVideos(a.v, a.vn, 0)
 	if err != nil {
 		return "", err
 	}
 	a.s = append(a.s, ss...)
-	ss, err = userSess.UploadMultiWallDocs(a.d, a.dn, gid)
+	ss, err = userSess.UploadMultiWallDocs(a.d, a.dn, 0)
+	if err != nil {
+		return "", err
+	}
+	a.s = append(a.s, ss...)
+	gid := a.attachUp.gid
+	// upload audio using user token but into group's audio section
+	ss, err = userSess.UploadMultiAudios(a.a, a.an, gid)
 	if err != nil {
 		return "", err
 	}
@@ -952,16 +960,19 @@ func (a *attachPM) Upload() (string, error) {
 	return strings.Join(a.s, ","), nil
 }
 
-// NewCommunityPMUploader optimize for community PM file upload. Audio is not
-// supported and it will be uploaded as doc. Only file with community ownership
-// can apear on the community PM. Video upload will put the video into video
-// section of the respective group. Both user and group token are required as
-// group token is used for upload photo through message upload server. There
-// isn't any message upload server for doc or video. Doc and video will use
-// user token to upload with group_id provide to the http client params. Photo
-// message upload server do not allow group_id param. Uploaded doc will also
-// appear on group doc section. Use unlinker to unlink them after message with
-// attachments have been sent out.
+// NewCommunityPMUploader optimize for community PM file upload. Both user and
+// group token are required as group token is used for upload photo through
+// message upload server meanwhile user token is used for doc, video and audio.
+// There isn't any message upload server for video or audio. Message doc upload
+// API only work for non-public page community. Thus it'll not be used. Doc and
+// video will use user token to upload with 0 group_id (default to user
+// section) provide to the http client params. Audio will use user token to
+// upload with group_id (but in the end it'll be uploaded to user section).
+// Photo message upload server don't allow group_id param. Uploaded doc, video
+// and audio will appear on user account doc, video and audio sections
+// respectively and not in group. Use unlinker to unlink them after message
+// with attachments have been sent out and processed properly (video need time
+// to process).
 func NewCommunityPMUploader(user, group *Session, gid int) AttachmentUploader {
 	return &attachPM{
 		attachUp: &attachUp{gid: gid, sess: user},
