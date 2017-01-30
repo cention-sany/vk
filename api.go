@@ -1,10 +1,13 @@
 package vk
 
 import (
+	"crypto/tls"
 	"encoding/json"
 	"errors"
 	"fmt"
+	"net"
 	"net/http"
+	"net/http/httputil"
 	"net/url"
 	"strconv"
 	"sync"
@@ -189,11 +192,45 @@ func (s *Session) CallAPI(method string, params url.Values, out interface{}) err
 			fmt.Printf("vk call: %s\n", endpoint.String())
 		}
 		gdelay.Wait()
-		if resp, err = http.Get(endpoint.String()); err != nil {
+		rq, err := http.NewRequest(http.MethodPost, endpoint.String(), nil)
+		if err != nil {
 			return err
 		}
+		if Debug {
+			b, err := httputil.DumpRequestOut(rq, false)
+			if err != nil {
+				fmt.Println("vk: failed debug dump request:", err)
+			} else {
+				fmt.Printf("vk: debug request api: %q\n", string(b))
+			}
+		}
+		trans := &http.Transport{
+			Proxy: http.ProxyFromEnvironment,
+			DialContext: (&net.Dialer{
+				Timeout:   30 * time.Second,
+				KeepAlive: 30 * time.Second,
+			}).DialContext,
+			MaxIdleConns:          100,
+			IdleConnTimeout:       90 * time.Second,
+			TLSHandshakeTimeout:   10 * time.Second,
+			ExpectContinueTimeout: 1 * time.Second,
+			TLSNextProto:          map[string]func(string, *tls.Conn) http.RoundTripper{},
+		}
+		cli := &http.Client{Transport: trans}
+		if resp, err = cli.Do(rq); err != nil {
+			if Debug {
+				fmt.Println("vk: debug error when Do:", err)
+			}
+			return err
+		}
+		// if resp, err = http.Get(endpoint.String()); err != nil {
+		// 	return err
+		// }
 		defer resp.Body.Close()
 		if err = json.NewDecoder(resp.Body).Decode(&response); err != nil {
+			if Debug {
+				fmt.Println("vk: debug error when Get Response:", err)
+			}
 			return err
 		}
 		if response.Err != nil && response.Err.Code != 0 {
