@@ -1,5 +1,10 @@
 package vk
 
+const (
+	audStr = "audio"
+	vidStr = "video"
+)
+
 // Scope is an access scope from https://vk.com/dev/permissions
 type Scope int
 
@@ -12,9 +17,9 @@ func (s Scope) String() string {
 	case 4:
 		return "photos"
 	case 8:
-		return "audio"
+		return audStr
 	case 16:
-		return "video"
+		return vidStr
 	case 32: // deprecated
 		return "offers"
 	case 64: // deprecated

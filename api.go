@@ -16,6 +16,7 @@ import (
 const (
 	vkAuthorize   = "https://oauth.vk.com/authorize"
 	vkAccessToken = "https://oauth.vk.com/access_token"
+	safeURILen    = 2000
 )
 
 var (
@@ -155,27 +156,24 @@ type Session struct {
 }
 
 // getAPIURL prepares URL instance with defined method
-func (s *Session) getAPIURL(method string) *url.URL {
-	q := url.Values{
+func (s *Session) getQuery() url.Values {
+	return url.Values{
 		"v":            {Version},
 		"https":        {strconv.Itoa(HTTPS)},
 		"access_token": {s.AccessToken},
-	}.Encode()
-	apiURL, _ := url.Parse(APIURL + method + "?" + q)
-	return apiURL
+	}
 }
 
 // save for multi-goroutines
 func (s *Session) CallAPI(method string, params url.Values, out interface{}) error {
-	endpoint := s.getAPIURL(method)
-	query := endpoint.Query()
+	query := s.getQuery()
 	captcha.get(params)
 	for k, v := range params {
 		if len(v) > 0 {
 			query.Set(k, v[0])
 		}
 	}
-	endpoint.RawQuery = query.Encode()
+	q := query.Encode()
 	err := retro.DoWithRetry(func() error {
 		var (
 			err      error
@@ -185,12 +183,25 @@ func (s *Session) CallAPI(method string, params url.Values, out interface{}) err
 				Response json.RawMessage `json:"response"`
 			}
 		)
-		if Debug {
-			fmt.Printf("vk call: %s\n", endpoint.String())
-		}
 		gdelay.Wait()
-		if resp, err = http.Get(endpoint.String()); err != nil {
-			return err
+		ep := fmt.Sprint(APIURL, method)
+		if len(q)+len(ep)+1 > safeURILen { // Add 1 for the `?` char
+			// use POST method if the generate URL request length too long
+			if Debug {
+				fmt.Printf("vk post: %s\n", ep)
+			}
+			if resp, err = http.PostForm(ep, query); err != nil {
+				return err
+			}
+		} else {
+			// use GET method and put request parameter as URL string
+			ep = fmt.Sprint(ep, "?", q)
+			if Debug {
+				fmt.Printf("vk get: %s\n", ep)
+			}
+			if resp, err = http.Get(ep); err != nil {
+				return err
+			}
 		}
 		defer resp.Body.Close()
 		if err = json.NewDecoder(resp.Body).Decode(&response); err != nil {

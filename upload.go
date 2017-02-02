@@ -1016,12 +1016,12 @@ func NewUnlinker(sess *Session, ts ...int) unlinker {
 			ps[used] = "docs"
 			used++
 		case UnlinkVideo:
-			ss[used] = "video"
-			ps[used] = "video"
+			ss[used] = vidStr
+			ps[used] = vidStr
 			used++
 		case UnlinkAudio:
-			ss[used] = "audio"
-			ps[used] = "audio"
+			ss[used] = audStr
+			ps[used] = audStr
 			used++
 		}
 	}
